@@ -49,6 +49,8 @@ output_sp = extractor_sp(dataset_lf)
 output_ae = extractor_ae(dataset_lf)
 output_disk = extractor_disk(dataset_lf)
 
+
+os.makedirs(os.path.dirname(args.output_lf), exist_ok=True)
 with open(args.output_lf, 'wb') as f:
     pickle.dump([output_sp, output_ae, output_disk], f)
 
@@ -60,5 +62,6 @@ if args.ft_model:
 extractor_gf = DeepFeatures(backbone, batch_size=BATCH_SIZE_GF, device=device)
 output_gf = extractor_gf(dataset_gf)
 
+os.makedirs(os.path.dirname(args.output_gf), exist_ok=True)
 with open(args.output_gf, 'wb') as f:
     pickle.dump(output_gf, f)
