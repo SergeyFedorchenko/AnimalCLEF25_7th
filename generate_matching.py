@@ -66,5 +66,6 @@ features_query = [output_disk[x] for x in val_data_idx]
 features_database = [output_disk[x] for x in train_data_idx]
 output_disk = matcher_disk(features_query, features_database,  pairs=cos_sim_chunk_pairs)
 
+os.makedirs(os.path.dirname(args.output_kp), exist_ok=True)
 with open(args.output_kp, 'wb') as f:
     pickle.dump([output_sp, output_ae, output_disk], f)
