@@ -7,6 +7,15 @@ import pickle
 from utils import NewPad
 import timm
 
+parser = argparse.ArgumentParser(description="Extract global and local features.")
+parser.add_argument('--metadata_csv', type=str, default='metadata.csv', help='Path to metadata CSV.')
+parser.add_argument('--root_dir', type=str, default='.', help='Root directory with images.')
+parser.add_argument('--output_lf', type=str, default='output_lf.pickle', help='Output path for local features.')
+parser.add_argument('--output_gf', type=str, default='output_gf.pickle', help='Output path for global features.')
+parser.add_argument('--ft_model', type=str, default='', help='Path to fine-tuned MegaDescriptor model (optional).')
+
+args = parser.parse_args()
+
 transform_lf = T.Compose([
     NewPad(),
     T.Resize([512, 512]),
@@ -24,12 +33,10 @@ BATCH_SIZE_LF = 128
 BATCH_SIZE_GF = 32
 device = 'cuda'
 
-# path_to_ft_model = '/content/ft_model.pt'
-path_to_ft_model = ''
-df = pd.read_csv(f'metadata.csv')
-current_file_path = os.getcwd()
 
-metadata = {'metadata':  df, 'root': current_file_path}
+df = pd.read_csv(args.metadata_csv)
+
+metadata = {'metadata':  df, 'root': args.root_dir}
 
 dataset_lf = ImageDataset(**metadata, transform=transform_lf)
 dataset_gf = ImageDataset(**metadata, transform=transform_gf)
@@ -42,16 +49,16 @@ output_sp = extractor_sp(dataset_lf)
 output_ae = extractor_ae(dataset_lf)
 output_disk = extractor_disk(dataset_lf)
 
-with open('output_lf.pickle', 'wb') as f:
+with open(args.output_lf, 'wb') as f:
     pickle.dump([output_sp, output_ae, output_disk], f)
 
 backbone = timm.create_model('hf-hub:BVRA/MegaDescriptor-L-384', num_classes=0, pretrained=True)
-if path_to_ft_model:
-    state_dict = torch.load(path_to_ft_model)
+if args.ft_model:
+    state_dict = torch.load(args.ft_model)
     backbone.load_state_dict(state_dict)
 
 extractor_gf = DeepFeatures(backbone, batch_size=BATCH_SIZE_GF, device=device)
 output_gf = extractor_gf(dataset_gf)
 
-with open('output_gf.pickle', 'wb') as f:
+with open(args.output_gf, 'wb') as f:
     pickle.dump(output_gf, f)
