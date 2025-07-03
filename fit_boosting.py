@@ -109,4 +109,5 @@ preds_animal[np.array([x[0] for x in preds_final]) < TH] = 'new_individual'
 submission = pd.DataFrame()
 submission['image_id'] = test_df_lgb['id1'][::BEST_K].values
 submission['identity'] = preds_animal
+os.makedirs(os.path.dirname(args.submission_csv), exist_ok=True)
 submission.to_csv(args.submission_csv, index = None)
