@@ -7,18 +7,29 @@ import pandas as pd
 import torch
 import lightgbm as lgb
 
-with open('output_gf.pickle', 'rb') as f:
+parser = argparse.ArgumentParser(description="Fit LightGBM on pairwise similarity features and generate submission.")
+parser.add_argument('--metadata_csv', type=str, default='metadata.csv', help='Path to metadata CSV.')
+parser.add_argument('--output_gf', type=str, default='output_gf.pickle', help='Path to global features.')
+parser.add_argument('--output_kp', type=str, default='output_kp.pickle', help='Path to keypoint match features.')
+parser.add_argument('--submission_csv', type=str, default='submission.csv', help='Output path for submission file.')
+parser.add_argument('--best_k', type=int, default=150, help='Top-K most similar pairs per query.')
+parser.add_argument('--thresh', type=float, default=0.75, help='Threshold below which predictions are labeled "new_individual".')
+
+args = parser.parse_args()
+
+
+with open(args.output_gf, 'rb') as f:
     output_gf = pickle.load(f)
 
-with open('output_kp.pickle', 'rb') as f:
+with open(args.output_kp, 'rb') as f:
     output_sp, output_ae, output_disk = pickle.load(f)
 
 device = 'cuda'
-BEST_K = 150
-TH = 0.75
+BEST_K = args.best_k
+TH = args.thresh
 
 current_file_path = os.getcwd()
-df = pd.read_csv(f'metadata.csv')
+df = pd.read_csv(args.metadata_csv)
 df['orient_class'] = df['orientation'].fillna('no').map({x:i for i,x in enumerate(sorted(df['orientation'].fillna('no').unique()))})
 
 train_data_idx = np.where(df['split'] == 'database')[0]
@@ -98,4 +109,4 @@ preds_animal[np.array([x[0] for x in preds_final]) < TH] = 'new_individual'
 submission = pd.DataFrame()
 submission['image_id'] = test_df_lgb['id1'][::BEST_K].values
 submission['identity'] = preds_animal
-submission.to_csv('submission.csv', index = None)
+submission.to_csv(args.submission_csv, index = None)
