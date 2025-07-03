@@ -1,7 +1,12 @@
 ## Usage
 # Step 1: Extract Features
 
-python extract_features.py
+python extract_features.py \
+  --metadata_csv data/metadata.csv \
+  --root_dir data/images \
+  --ft_model checkpoints/ft_model.pt \
+  --output_lf outputs/output_lf.pickle \
+  --output_gf outputs/output_gf.pickle
 
 This will create:
 
@@ -11,7 +16,13 @@ This will create:
 
 # Step 2: Generate Keypoint Matches
 
-python generate_matching.py
+python generate_matching.py \
+  --metadata_csv data/metadata.csv \
+  --output_gf outputs/output_gf.pickle \
+  --output_lf outputs/output_lf.pickle \
+  --output_kp outputs/output_kp.pickle \
+  --best_k 150 \
+  --batch_size_match 128
 
 This will compute matching scores for all image pairs and save them to:
 
@@ -19,7 +30,13 @@ This will compute matching scores for all image pairs and save them to:
 
 # Step 3: Train Boosting Model and Generate Submission
 
-python fit_boosting.py
+python fit_boosting.py \
+  --metadata_csv data/metadata.csv \
+  --output_gf outputs/output_gf.pickle \
+  --output_kp outputs/output_kp.pickle \
+  --submission_csv outputs/submission.csv \
+  --best_k 150 \
+  --thresh 0.75
 
 This trains a LightGBM binary classifier on pairwise features and produces:
 
