@@ -4,23 +4,31 @@ from wildlife_tools.similarity.pairwise.lightglue import MatchLightGlue
 import pickle
 import torch.nn.functional as F
 import numpy as np
-import pickle
 import os
 import pandas as pd
 import torch
 
-with open('output_lf.pickle', 'rb') as f:
+parser = argparse.ArgumentParser(description="Generate keypoint matches for candidate pairs.")
+parser.add_argument('--metadata_csv', type=str, default='metadata.csv', help='Path to metadata CSV.')
+parser.add_argument('--output_gf', type=str, default='output_gf.pickle', help='Path to global features pickle.')
+parser.add_argument('--output_lf', type=str, default='output_lf.pickle', help='Path to local features pickle.')
+parser.add_argument('--output_kp', type=str, default='output_kp.pickle', help='Output path for keypoint match results.')
+parser.add_argument('--best_k', type=int, default=150, help='Top-K most similar pairs per query.')
+parser.add_argument('--batch_size_match', type=int, default=128, help='Batch size for LightGlue matchers.')
+args = parser.parse_args()
+
+with open(args.output_lf, 'rb') as f:
     output_sp, output_ae, output_disk = pickle.load(f)
 
-with open('output_gf.pickle', 'rb') as f:
+with open(args.output_gf, 'rb') as f:
     output_gf = pickle.load(f)
 
 device = 'cuda'
-BEST_K = 150
-BATCH_SIZE_MATCH = 128
+BEST_K = args.best_k
+BATCH_SIZE_MATCH = args.batch_size_match
 
 current_file_path = os.getcwd()
-df = pd.read_csv(f'metadata.csv')
+df = pd.read_csv(args.metadata_csv)
 
 train_data_idx = np.where(df['split'] == 'database')[0]
 val_data_idx =  np.concatenate((np.where(df['split'] == 'database')[0][::10], 
@@ -58,5 +66,5 @@ features_query = [output_disk[x] for x in val_data_idx]
 features_database = [output_disk[x] for x in train_data_idx]
 output_disk = matcher_disk(features_query, features_database,  pairs=cos_sim_chunk_pairs)
 
-with open('output_kp.pickle', 'wb') as f:
+with open(args.output_kp, 'wb') as f:
     pickle.dump([output_sp, output_ae, output_disk], f)
