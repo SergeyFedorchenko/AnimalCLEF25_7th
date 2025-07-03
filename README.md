@@ -2,7 +2,9 @@
 # Step 1: Download Data and Extract Features
 
 kaggle competitions download -c animal-clef-2025
+
 unzip animal-clef-2025.zip -d data/
+
 python extract_features.py \
   --metadata_csv data/metadata.csv \
   --root_dir data/images \
